@@ -17,7 +17,7 @@
     <param name="homogeneous_ccs" value="1"/><!--cache coherence hardware -->
     <param name="homogeneous_NoCs" value="1"/>
     <param name="core_tech_node" value="40"/><!-- nm -->
-    <param name="target_core_clockrate" value="1e-6/config.system.clk_domain.clock"/><!--MHz -->
+    <param name="target_core_clockrate" value="1e6/config.system.clk_domain.clock"/><!--MHz -->
     <param name="temperature" value="340"/> <!-- Kelvin -->
     <param name="number_cache_levels" value="2"/>
     <param name="interconnect_projection_type" value="1"/><!--0: aggressive wire technology; 1: conservative wire technology -->
@@ -39,7 +39,7 @@
     <!-- *********************** cores ******************* -->
     <component id="system.core0" name="core0">
       <!-- Core property -->
-      <param name="clock_rate" value="1e-6/config.system.clk_domain.clock"/>
+      <param name="clock_rate" value="1e6/config.system.clk_domain.clock"/>
       <param name="vdd" value="1.25"/><!-- 0 means using ITRS default vdd -->
       <param name="power_gating_vcc" value="-1"/><!-- "-1" means using default power gating virtual power supply voltage constrained by technology and computed automatically -->
       <param name="opt_local" value="0"/> <!-- for cores with unknown timing, set to 0 to force off the opt flag -->
