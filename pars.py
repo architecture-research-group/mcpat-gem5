@@ -9,33 +9,8 @@ import os
 from xml.etree import ElementTree as ET
 
 
-#This is a wrapper over xml parser so that 
-#comments are preserved.
-#source: http://effbot.org/zone/element-pi.htm
-class PIParser(ET.XMLTreeBuilder):
-   def __init__(self):
-       ET.XMLTreeBuilder.__init__(self)
-       # assumes ElementTree 1.2.X
-       self._parser.CommentHandler = self.handle_comment
-       self._parser.ProcessingInstructionHandler = self.handle_pi
-       self._target.start("document", {})
-
-   def close(self):
-       self._target.end("document")
-       return ET.XMLTreeBuilder.close(self)
-
-   def handle_comment(self, data):
-       self._target.start(ET.Comment, {})
-       self._target.data(data)
-       self._target.end(ET.Comment)
-
-   def handle_pi(self, target, data):
-       self._target.start(ET.PI, {})
-       self._target.data(target + " " + data)
-       self._target.end(ET.PI)
-
 def parse(source):
-    return ET.parse(source, PIParser())
+    return ET.parse(source, parser=ET.XMLParser(target=ET.TreeBuilder(insert_comments=True, insert_pis=True)))
 
 def main():
     global opts, outdir, tempFile
@@ -79,8 +54,8 @@ def dumpMcpatOut(itr):
     for param in rootElem.iter('param'):
         name = param.attrib['name']
         value = param.attrib['value']
-        print name
-        print value
+        print(name)
+        print(value)
         if 'config' in value:
             allConfs = configMatch.findall(value)
             for conf in allConfs:
@@ -94,8 +69,8 @@ def dumpMcpatOut(itr):
             if "[" in value or "]" in value:
                 value_proc = str(value).replace('[', '')
                 value_proc = str(value_proc).replace(']', '')
-                print value
-                print value_proc
+                print(value)
+                print(value_proc)
                 param.attrib['value'] = str(eval(str(value_proc)))
             else:
                 param.attrib['value'] = str(eval(str(value)))
@@ -123,7 +98,7 @@ def dumpMcpatOut(itr):
                     else:
                         stat.attrib['value'] = str(eval(expr))
         #Write out the xml file
-        if opts.verbose: print ("Writing input to McPAT in: %s" % outDir) 
+        if opts.verbose: print("Writing input to McPAT in: %s" % outDir) 
         templateMcpat.write("%s/mcpat-out-%d.xml" %(outDir, itr))
         #if (itr == 0):
         #    os.system("sed -i 's/<stat name=\"clock_rate\" value=\"[0-9]*\"/<param name=\"clock_rate\" value=\"3100\"/g' %s/mcpat-out-%d.xml" %(outDir, itr))
@@ -150,15 +125,17 @@ def dumpMcpatOut(itr):
                     for i in range(len(exprs)):
                         exprs[i] = str(eval(exprs[i]))
                     param.attrib['value'] = ','.join(exprs)
+                    # prevent eval() from making tuple in else
+                    continue
                 if "[" in value or "]" in value:
                     value_proc = str(value).replace('[', '')
                     value_proc = str(value_proc).replace(']', '')
-                    print value
-                    print value_proc
+                    print(value)
+                    print(value_proc)
                     param.attrib['value'] = str(eval(str(value_proc)))
                 else:
-                    print name
-                    print value
+                    print(name)
+                    print(value)
                     param.attrib['value'] = str(eval(str(value)))
 
 
@@ -173,12 +150,12 @@ def getConfValue(confStr):
                 #this is mostly for system.cpu* as system.cpu is an array
                 #This could be made better
                 if x not in currConf[0]:
-                    print ("%s does not exist in config" % currHierarchy)
+                    print("%s does not exist in config" % currHierarchy)
                 else:
                     currConf = currConf[0][x]
             else:
-                    print ("***WARNING: %s does not exist in config.***" % currHierarchy)
-                    print ("\t Please use the right config param in your McPAT template file")
+                    print("***WARNING: %s does not exist in config.***" % currHierarchy)
+                    print("\t Please use the right config param in your McPAT template file")
         else:
             currConf = currConf[x]
             if currHierarchy == "testsys.cpu_clk_domain.clock":
@@ -191,7 +168,7 @@ def readStatsFile(statsFile):
     global stats, period
     stats = {}
     period = 0
-    if opts.verbose: print ("Reading GEM5 stats from: %s" %  statsFile)
+    if opts.verbose: print("Reading GEM5 stats from: %s" %  statsFile)
     F = open(statsFile)
     ignores = re.compile(r'^---|^$')
     statLine = re.compile(r'([a-zA-Z0-9_\.:+-]+)\s+([-+]?[0-9]+\.[0-9]+|[-+]?[0-9]+|nan|inf)')
@@ -209,9 +186,9 @@ def readStatsFile(statsFile):
             if statValue == 'nan':
                 #print "\tWarning (stats): %s is nan. Setting it to 0" % statKind
                 statValue = '0.0'
-            if not stats.has_key(period):
+            if period not in stats:
                 stats[period] = {}
-            if not opts.periodic and stats[period].has_key(statKind):
+            if not opts.periodic and statKind in stats[period]:
                 stats[period][statKind] = str(float(stats[period][statKind]) + float(statValue))
             else:
                 stats[period][statKind] = statValue
@@ -230,17 +207,17 @@ def readStatsFile(statsFile):
 
 def readConfigFile(configFile):
     global config
-    if opts.verbose: print ("Reading config from: %s" % configFile)
+    if opts.verbose: print("Reading config from: %s" % configFile)
     F = open(configFile)
     config = json.load(F)
-    #print config
+    #print(config)
     #print config["system"]["membus"]
     #print config["system"]["cpu"][0]["clock"]
     F.close()
 
 def readMcpatFile(templateFile):
     global templateMcpat 
-    if opts.verbose: print ("Reading McPAT template from: %s" % templateFile)
+    if opts.verbose: print("Reading McPAT template from: %s" % templateFile)
     templateMcpat = parse(templateFile)
     #print dir(templateMcpat)
     
