@@ -146,7 +146,7 @@ def getConfValue(confStr):
     for x in spltConf:
         currHierarchy += x
         if x not in currConf:
-            if isinstance(currConf, types.ListType):
+            if isinstance(currConf, list):
                 #this is mostly for system.cpu* as system.cpu is an array
                 #This could be made better
                 if x not in currConf[0]:
